@@ -43,8 +43,13 @@ export default function Homepage({ onStart }) {
                 Open Code Editor
               </button>
 
-              <a href="https://example.com/docs" target="_blank" rel="noreferrer" className="px-5 py-3 rounded-full border border-gray-200 text-gray-700 hover:bg-gray-50">
-                Getting Started
+              <a
+                href="https://github.com/arjungupt771/AI_Code_Enhancer"
+                target="_blank"
+                rel="noreferrer"
+                className="px-5 py-3 rounded-full border border-gray-200 text-gray-700 hover:bg-gray-50"
+              >
+                View Repository
               </a>
             </div>
 
@@ -71,12 +76,11 @@ export default function Homepage({ onStart }) {
             </div>
 
             <div className="mt-6 bg-gradient-to-r from-indigo-50 to-pink-50 rounded-lg p-4 text-sm text-gray-700 border border-white/30">
-              <strong>Trusted by early teams:</strong>
-              <div className="mt-2 flex items-center gap-3">
-                <div className="w-8 h-8 bg-gray-200 rounded-full" title="Company A"></div>
-                <div className="w-8 h-8 bg-gray-200 rounded-full" title="Company B"></div>
-                <div className="w-8 h-8 bg-gray-200 rounded-full" title="Company C"></div>
-                <div className="text-xs text-gray-500 ml-2">and many more</div>
+              <strong>Built for local code review:</strong>
+
+              <div className="mt-1 text-xs text-gray-500">
+                Analyze source files locally and inspect AI findings
+                before applying changes.
               </div>
             </div>
           </div>

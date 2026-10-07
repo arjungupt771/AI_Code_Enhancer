@@ -1,4 +1,35 @@
-node_modules
-.env
-.venv/
+# Python
 __pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+.env
+*.log
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Build output
+build/
+dist/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local database / secrets
+*.db
+EOF
