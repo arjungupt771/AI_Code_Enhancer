@@ -7,11 +7,11 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from core_config import (
+from backend.core_config import (
     DEFAULT_MODEL,
     GEMINI_API_KEY,
 )
-from schemas import (
+from backend.schemas import (
     ReviewIssue,
     ReviewResponse,
 )

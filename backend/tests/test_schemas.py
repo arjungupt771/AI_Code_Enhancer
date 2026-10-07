@@ -2,7 +2,7 @@ import pytest
 
 from pydantic import ValidationError
 
-from schemas import (
+from backend.schemas import (
     FixRequest,
     ReviewIssue,
     ReviewResponse,

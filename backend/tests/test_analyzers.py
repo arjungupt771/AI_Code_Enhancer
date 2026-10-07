@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from analyzers import (
+from backend.analyzers import (
     JavaScriptAnalyzer,
     PythonAnalyzer,
     StaticFinding,

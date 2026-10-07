@@ -177,10 +177,15 @@ class PythonAnalyzer(Analyzer):
 
     @staticmethod
     def _bandit_severity(severity: str | None) -> str:
-        if severity == "HIGH":
+        normalized = (severity or "").upper()
+
+        if normalized == "HIGH":
             return "error"
 
-        if severity == "MEDIUM":
+        if normalized == "MEDIUM":
+            return "error"
+
+        if normalized == "LOW":
             return "warning"
 
         return "info"

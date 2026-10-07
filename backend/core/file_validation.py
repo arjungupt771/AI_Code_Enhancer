@@ -4,7 +4,7 @@ from pathlib import PurePath
 
 from fastapi import HTTPException, UploadFile
 
-from core_config import MAX_FILE_SIZE_BYTES, MAX_FILES
+from backend.core_config import MAX_FILE_SIZE_BYTES, MAX_FILES
 
 
 ALLOWED_EXTENSIONS = frozenset(

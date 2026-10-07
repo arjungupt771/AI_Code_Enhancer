@@ -1,6 +1,6 @@
 """Backward-compatible configuration exports."""
 
-from core_config import (
+from backend.core_config import (
     CORS_ORIGINS,
     DEFAULT_MODEL,
     GEMINI_API_KEY,

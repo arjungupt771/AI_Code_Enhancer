@@ -25,15 +25,17 @@ Category = Literal[
 
 
 class ReviewIssue(BaseModel):
-    """A single AI-detected code-review finding."""
+    """A single code-review finding from AI or static analysis."""
 
     model_config = ConfigDict(
         extra="ignore"
     )
 
-    line: int = Field(
-        ge=1
-    )
+    source: Literal["ai", "static"] = "ai"
+
+    tool: str | None = None
+
+    rule_id: str | None = None
 
     severity: Severity
 
@@ -55,6 +57,20 @@ class ReviewIssue(BaseModel):
         le=1,
     )
 
+    file_path: str | None = None
+
+    line: int | None = Field(
+        default=None,
+        ge=1,
+    )
+
+    column: int | None = Field(
+        default=None,
+        ge=1,
+    )
+
+    suggestion: str | None = None
+
     @field_validator(
         "message",
         "explanation",
@@ -74,44 +90,20 @@ class ReviewResponse(BaseModel):
         default_factory=list
     )
 
+    summary: str | None = None
+
     fixed_code: str = ""
 
 
 class FixRequest(BaseModel):
-    """Request for an AI-generated correction."""
-
-    code: str = Field(
-        min_length=1
-    )
-
-    language: str = Field(
-        min_length=1
-    )
-
-    issues: list[ReviewIssue] = Field(
-        default_factory=list
-    )
-
+    code: str
+    language: str
+    issues: list[ReviewIssue] = Field(default_factory=list)
     model: str | None = None
 
-    @field_validator(
-        "code",
-        "language",
-        "model",
-    )
+    @field_validator("code", "language")
     @classmethod
-    def reject_blank_strings(
-        cls,
-        value: str | None,
-    ) -> str | None:
-        if value is None:
-            return value
-
-        value = value.strip()
-
-        if not value:
-            raise ValueError(
-                "Value cannot be blank"
-            )
-
+    def validate_non_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Field cannot be blank.")
         return value
