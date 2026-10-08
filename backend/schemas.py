@@ -106,6 +106,32 @@ class QualityScoreResponse(BaseModel):
     )
     total_issues: int = Field(ge=0)
 
+class RepositorySummary(BaseModel):
+    """Repository-level analysis summary."""
+
+    total_files: int = Field(ge=0)
+
+    analyzed_files: int = Field(ge=0)
+
+    files_with_issues: int = Field(
+        ge=0
+    )
+
+    total_issues: int = Field(
+        ge=0
+    )
+
+    languages: dict[str, int] = Field(
+        default_factory=dict
+    )
+
+    extensions: dict[str, int] = Field(
+        default_factory=dict
+    )
+
+    analyzed_paths: list[str] = Field(
+        default_factory=list
+    )
 
 class ReviewResponse(BaseModel):
     """Normalized response returned by the review service."""
@@ -117,6 +143,10 @@ class ReviewResponse(BaseModel):
     summary: str | None = None
 
     fixed_code: str = ""
+
+    quality_score: QualityScoreResponse | None = None
+
+    repository: RepositorySummary | None = None
 
 
 class FixRequest(BaseModel):

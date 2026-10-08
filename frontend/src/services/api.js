@@ -40,6 +40,13 @@ export async function reviewCode({
 
   files.forEach((file) => {
     formData.append("files", file);
+
+    formData.append(
+      "file_paths",
+      file.webkitRelativePath ||
+        file.fullPath ||
+        file.name
+    );
   });
 
   formData.append(
