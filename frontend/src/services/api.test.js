@@ -166,3 +166,36 @@ test("API errors are converted to useful messages", async () => {
     "Code review failed."
   );
 });
+
+test("reviewCode sends repository-relative file paths", async () => {
+  const file = new File(
+    ["print('hello')"],
+    "main.py",
+    {
+      type: "text/x-python",
+    }
+  );
+
+  Object.defineProperty(
+    file,
+    "webkitRelativePath",
+    {
+      value: "src/utils/main.py",
+    }
+  );
+
+  await reviewCode({
+    files: [file],
+    language: "Python",
+    model: "gemini-2.5-flash",
+  });
+
+  const [, options] =
+    global.fetch.mock.calls[0];
+
+  expect(
+    options.body.getAll("file_paths")
+  ).toEqual([
+    "src/utils/main.py",
+  ]);
+});
