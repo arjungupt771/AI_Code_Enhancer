@@ -60,6 +60,9 @@ export default function useCodeReview() {
   const [qualityScore, setQualityScore] =
     useState(null);
 
+  const [dependencySummary, setDependencySummary] =
+  useState(null);
+
   const [selectedIssue, setSelectedIssue] =
     useState(null);
 
@@ -368,6 +371,7 @@ export default function useCodeReview() {
 
     // Phase 2.3: clear quality score
     setQualityScore(null);
+    setDependencySummary(null);
 
     setSelectedIssue(null);
     setSelectedFolder(null);
@@ -451,6 +455,10 @@ export default function useCodeReview() {
         setQualityScore(
           response.quality_score ||
             null
+        );
+
+        setDependencySummary(
+          response.dependency_summary || null
         );
 
         setReviewData(
@@ -792,6 +800,7 @@ export default function useCodeReview() {
     filteredBySeverity,
     selectedIssue,
     stats,
+    dependencySummary,
 
     // Phase 2.3
     qualityScore,
@@ -833,6 +842,7 @@ export default function useCodeReview() {
     setShowConfirmRemoveAll,
     setInvalidFiles,
     setDragActive,
+    
 
     // actions
     handleFiles,

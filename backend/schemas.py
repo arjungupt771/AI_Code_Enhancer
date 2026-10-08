@@ -106,6 +106,35 @@ class QualityScoreResponse(BaseModel):
     )
     total_issues: int = Field(ge=0)
 
+class DependencyInfo(BaseModel):
+    """Dependency information returned by repository analysis."""
+
+    name: str
+    version_spec: str | None = None
+    source_file: str
+    dependency_type: str
+
+
+class DependencySummary(BaseModel):
+    """Repository dependency summary."""
+
+    manifests: list[str] = Field(
+        default_factory=list
+    )
+
+    dependencies: list[DependencyInfo] = Field(
+        default_factory=list
+    )
+
+    total_dependencies: int = Field(
+        ge=0
+    )
+
+    dependency_types: dict[str, int] = Field(
+        default_factory=dict
+    )
+
+
 class RepositorySummary(BaseModel):
     """Repository-level analysis summary."""
 
@@ -147,6 +176,8 @@ class ReviewResponse(BaseModel):
     quality_score: QualityScoreResponse | None = None
 
     repository: RepositorySummary | None = None
+
+    dependency_summary: DependencySummary | None = None
 
 
 class FixRequest(BaseModel):

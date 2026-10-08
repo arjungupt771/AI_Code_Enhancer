@@ -25,13 +25,22 @@ from backend.core_config import (
     DEFAULT_MODEL,
     GEMINI_API_KEY,
 )
-from backend.repository import RepositoryAnalyzer
+from backend.dependencies import (
+    DependencyAnalyzer,
+)
+from backend.repository import (
+    RepositoryAnalyzer,
+)
 from backend.schemas import (
     FixRequest,
     ReviewResponse,
 )
-from backend.scoring import calculate_quality_score
-from backend.services.llm import review_code_with_llm
+from backend.scoring import (
+    calculate_quality_score,
+)
+from backend.services.llm import (
+    review_code_with_llm,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -39,7 +48,10 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 STATIC_ANALYZER = create_hybrid_analyzer()
+
 REPOSITORY_ANALYZER = RepositoryAnalyzer()
+
+DEPENDENCY_ANALYZER = DependencyAnalyzer()
 
 
 def validate_api_configuration() -> None:
@@ -103,9 +115,11 @@ async def review_code(
 
     validate_file_count(files)
 
-    # New frontend requests provide explicit repository
-    # relative paths. Older requests/tests may not, so
-    # fall back to the uploaded filename.
+    # New frontend requests provide explicit
+    # repository-relative paths.
+    #
+    # Older requests/tests may not provide them,
+    # so fall back to the uploaded filename.
     if file_paths is not None:
         if len(file_paths) != len(files):
             raise HTTPException(
@@ -122,7 +136,10 @@ async def review_code(
         ]
 
     all_code: dict[str, str] = {}
-    static_files: list[tuple[Path, str]] = []
+
+    static_files: list[
+        tuple[Path, str]
+    ] = []
 
     for uploaded_file, requested_path in zip(
         files,
@@ -132,9 +149,8 @@ async def review_code(
             uploaded_file
         )
 
-        # Use the explicitly supplied repository path
-        # when available, while keeping the existing
-        # uploaded-file validation intact.
+        # Use the explicitly supplied repository
+        # path when available.
         path_to_analyze = (
             requested_path.strip()
             or filename
@@ -151,6 +167,7 @@ async def review_code(
                     ]
                 )
             )
+
         except ValueError as exc:
             raise HTTPException(
                 status_code=400,
@@ -191,7 +208,10 @@ async def review_code(
         )
 
     try:
-        # Build the repository-level representation.
+        # -------------------------------------------------
+        # Repository-level analysis
+        # -------------------------------------------------
+
         repository_result = (
             REPOSITORY_ANALYZER.analyze(
                 static_files
@@ -207,15 +227,59 @@ async def review_code(
             in repository_result.files
         ]
 
-        # Run static analysis across the repository.
+        # -------------------------------------------------
+        # Dependency analysis
+        # -------------------------------------------------
+
+        dependency_result = (
+            DEPENDENCY_ANALYZER.analyze(
+                repository_files
+            )
+        )
+
+        dependency_summary = {
+            "manifests": (
+                dependency_result.manifests_found
+            ),
+            "dependencies": [
+                {
+                    "name": dependency.name,
+                    "version_spec": (
+                        dependency.version_spec
+                    ),
+                    "source_file": (
+                        dependency.source_file
+                    ),
+                    "dependency_type": (
+                        dependency.dependency_type
+                    ),
+                }
+                for dependency
+                in dependency_result.dependencies
+            ],
+            "total_dependencies": (
+                dependency_result.dependency_count
+            ),
+            "dependency_types": (
+                dependency_result
+                .dependencies_by_type
+            ),
+        }
+
+        # -------------------------------------------------
+        # Static analysis
+        # -------------------------------------------------
+
         static_result = (
             STATIC_ANALYZER.analyze_files(
                 repository_files
             )
         )
 
-        static_findings = deduplicate_findings(
-            static_result.static_findings
+        static_findings = (
+            deduplicate_findings(
+                static_result.static_findings
+            )
         )
 
         static_issues = [
@@ -225,8 +289,10 @@ async def review_code(
             for finding in static_findings
         ]
 
-        # Run AI review across all analyzed repository
-        # files while preserving their relative paths.
+        # -------------------------------------------------
+        # AI review
+        # -------------------------------------------------
+
         ai_code = {
             repository_file.path.as_posix():
                 repository_file.content
@@ -244,18 +310,27 @@ async def review_code(
             ),
         )
 
-        # Combine static and AI findings.
+        # -------------------------------------------------
+        # Combine findings
+        # -------------------------------------------------
+
         combined_issues = (
-            static_issues +
-            ai_response.issues
+            static_issues
+            + ai_response.issues
         )
 
-        # Calculate repository-wide quality score.
+        # -------------------------------------------------
+        # Quality scoring
+        # -------------------------------------------------
+
         quality = calculate_quality_score(
             combined_issues
         )
 
-        # Identify files containing issues.
+        # -------------------------------------------------
+        # Files containing issues
+        # -------------------------------------------------
+
         issue_files = set()
 
         for issue in combined_issues:
@@ -268,6 +343,10 @@ async def review_code(
 
             if file_path:
                 issue_files.add(file_path)
+
+        # -------------------------------------------------
+        # Repository summary
+        # -------------------------------------------------
 
         repository_summary = {
             "total_files": (
@@ -293,24 +372,35 @@ async def review_code(
             ),
         }
 
+        # -------------------------------------------------
+        # Final response
+        # -------------------------------------------------
+
         return ReviewResponse(
             issues=combined_issues,
             summary=ai_response.summary,
+
             quality_score={
                 "overall": quality.overall,
+
                 "categories": {
                     category: {
                         "score": score,
                         "issues": (
-                            quality.category_counts.get(
+                            quality
+                            .category_counts
+                            .get(
                                 category,
                                 0,
                             )
                         ),
                     }
                     for category, score
-                    in quality.category_scores.items()
+                    in quality
+                    .category_scores
+                    .items()
                 },
+
                 "files": {
                     file_path: {
                         "score": score,
@@ -326,21 +416,33 @@ async def review_code(
                                     issue,
                                     dict,
                                 )
-                                else issue.file_path
-                            ) == file_path
+                                else (
+                                    issue.file_path
+                                )
+                            )
+                            == file_path
                         ),
                     }
                     for file_path, score
-                    in quality.file_scores.items()
+                    in quality
+                    .file_scores
+                    .items()
                 },
+
                 "severity_counts": (
                     quality.severity_counts
                 ),
+
                 "total_issues": (
                     quality.total_issues
                 ),
             },
+
             repository=repository_summary,
+
+            dependency_summary=(
+                dependency_summary
+            ),
         )
 
     except HTTPException:
@@ -397,7 +499,10 @@ async def fix_code(
     return {
         "fixed_code": (
             fixed_code
-            if isinstance(fixed_code, str)
+            if isinstance(
+                fixed_code,
+                str,
+            )
             else ""
         )
     }

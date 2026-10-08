@@ -4,7 +4,7 @@ import React, {
 } from "react";
 
 import useCodeReview from "../hooks/useCodeReview";
-
+import DependencySummary from "./DependencySummary";
 import ErrorBanner from "./ErrorBanner";
 import FileUploadPanel from "./FileUploadPanel";
 import FileList from "./FileList";
@@ -37,6 +37,7 @@ export default function CodeUploader() {
     filteredBySeverity,
     selectedIssue,
     stats,
+    dependencySummary,
 
     // Phase 2.3: Code quality score
     qualityScore,
@@ -363,6 +364,10 @@ export default function CodeUploader() {
         filter={filter}
         onFilterChange={setFilter}
       />
+
+      <DependencySummary
+        dependencySummary={dependencySummary}
+      />  
 
       {/* Upload */}
 
