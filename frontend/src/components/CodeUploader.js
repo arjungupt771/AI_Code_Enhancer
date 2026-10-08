@@ -12,7 +12,6 @@ import ReviewSummary from "./ReviewSummary";
 import CodeEditor from "./CodeEditor";
 import ReviewPanel from "./ReviewPanel";
 
-
 export default function CodeUploader() {
   const langRef = useRef(null);
 
@@ -38,6 +37,9 @@ export default function CodeUploader() {
     filteredBySeverity,
     selectedIssue,
     stats,
+
+    // Phase 2.3: Code quality score
+    qualityScore,
 
     language,
     model,
@@ -82,7 +84,6 @@ export default function CodeUploader() {
     getFileIcon,
   } = useCodeReview();
 
-
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.key === "Escape") {
@@ -105,21 +106,17 @@ export default function CodeUploader() {
     setShowConfirmRemoveAll,
   ]);
 
-
   const handleBrowse = () => {
     fileInputRef.current?.click();
   };
-
 
   const handleSingleBrowse = () => {
     fileSingleRef.current?.click();
   };
 
-
   const handleFileChange = (event) => {
     handleFiles(event.target.files);
   };
-
 
   const handleDragOver = (event) => {
     event.preventDefault();
@@ -127,13 +124,11 @@ export default function CodeUploader() {
     setDragActive(true);
   };
 
-
   const handleDragLeave = (event) => {
     event.preventDefault();
     event.stopPropagation();
     setDragActive(false);
   };
-
 
   const handleDrop = async (event) => {
     event.preventDefault();
@@ -149,7 +144,6 @@ export default function CodeUploader() {
       items.length
     ) {
       const droppedFiles = [];
-
 
       const traverseEntry =
         (entry, path = "") =>
@@ -182,7 +176,6 @@ export default function CodeUploader() {
 
               return;
             }
-
 
             if (entry.isDirectory) {
               const reader =
@@ -225,7 +218,6 @@ export default function CodeUploader() {
             resolve();
           });
 
-
       const promises = [];
 
       for (
@@ -261,7 +253,6 @@ export default function CodeUploader() {
       }
     }
 
-
     const fallbackFiles =
       event.dataTransfer?.files;
 
@@ -275,7 +266,6 @@ export default function CodeUploader() {
     }
   };
 
-
   const handleApplyCurrentFix =
     () => {
       if (!fixedCode) return;
@@ -284,10 +274,8 @@ export default function CodeUploader() {
       setShowDiff(false);
     };
 
-
   return (
     <div className="p-4">
-
       <ErrorBanner
         message={error}
         onDismiss={clearError}
@@ -328,7 +316,6 @@ export default function CodeUploader() {
         </button>
       </div>
 
-
       {/* Parsing progress */}
 
       {parsing && (
@@ -351,7 +338,6 @@ export default function CodeUploader() {
         </div>
       )}
 
-
       {/* Upload progress */}
 
       {uploading && (
@@ -368,16 +354,15 @@ export default function CodeUploader() {
         </div>
       )}
 
-
       {/* Summary */}
 
       <ReviewSummary
         stats={stats}
         reviewData={reviewData}
+        qualityScore={qualityScore}
         filter={filter}
         onFilterChange={setFilter}
       />
-
 
       {/* Upload */}
 
@@ -405,7 +390,6 @@ export default function CodeUploader() {
         onClear={clearAll}
       />
 
-
       {/* File list */}
 
       <FileList
@@ -425,7 +409,6 @@ export default function CodeUploader() {
         formatBytes={formatBytes}
         getFileIcon={getFileIcon}
       />
-
 
       {/* Remove-all confirmation */}
 
@@ -481,7 +464,6 @@ export default function CodeUploader() {
         </div>
       )}
 
-
       {/* Filters */}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
@@ -515,7 +497,6 @@ export default function CodeUploader() {
           </option>
         </select>
 
-
         <div
           ref={langRef}
           className="flex items-center gap-2"
@@ -544,7 +525,6 @@ export default function CodeUploader() {
         </div>
       </div>
 
-
       {/* Model */}
 
       <select
@@ -563,13 +543,10 @@ export default function CodeUploader() {
         </option>
       </select>
 
-
       {/* Editor header */}
 
       <div className="mb-4">
-
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-white/80 backdrop-blur-md rounded-t-lg px-4 py-3 border border-white/30">
-
           <div className="flex items-center gap-4">
             <div
               className="text-sm font-medium truncate max-w-xs"
@@ -601,9 +578,7 @@ export default function CodeUploader() {
             </div>
           </div>
 
-
           <div className="mt-3 sm:mt-0 flex items-center gap-2">
-
             <button
               onClick={handleSubmit}
               disabled={
@@ -616,7 +591,6 @@ export default function CodeUploader() {
                 ? "Reviewing..."
                 : "🔍 Review"}
             </button>
-
 
             <button
               onClick={
@@ -633,10 +607,8 @@ export default function CodeUploader() {
                 ? "Applying..."
                 : "✨ Generate Fixes"}
             </button>
-
           </div>
         </div>
-
 
         {filter !== "all" && (
           <div className="mt-2 mb-3 px-3 py-2 rounded bg-gray-50 border border-gray-200 flex items-center justify-between">
@@ -663,7 +635,6 @@ export default function CodeUploader() {
           </div>
         )}
 
-
         <CodeEditor
           code={code}
           fixedCode={fixedCode}
@@ -677,9 +648,7 @@ export default function CodeUploader() {
             handleApplyCurrentFix
           }
         />
-
       </div>
-
 
       {/* Severity filters */}
 
@@ -708,7 +677,6 @@ export default function CodeUploader() {
         )}
       </div>
 
-
       {/* Review results */}
 
       <ReviewPanel
@@ -736,7 +704,6 @@ export default function CodeUploader() {
         }
         editorRef={editorRef}
       />
-
     </div>
   );
 }

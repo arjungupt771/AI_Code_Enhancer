@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+
 import {
   generateFix,
   reviewCode,
@@ -32,37 +39,62 @@ export default function useCodeReview() {
   const [fileList, setFileList] = useState([]);
   const [fileContents, setFileContents] = useState({});
 
-  const [selectedFolder, setSelectedFolder] = useState(null);
-  const [activeFile, setActiveFile] = useState(null);
+  const [selectedFolder, setSelectedFolder] =
+    useState(null);
+  const [activeFile, setActiveFile] =
+    useState(null);
 
-  const [language, setLanguage] = useState("Python");
-  const [model, setModel] = useState(DEFAULT_MODEL);
+  const [language, setLanguage] =
+    useState("Python");
+  const [model, setModel] =
+    useState(DEFAULT_MODEL);
 
   const [code, setCode] = useState("");
-  const [fixedCode, setFixedCode] = useState("");
+  const [fixedCode, setFixedCode] =
+    useState("");
 
-  const [reviewData, setReviewData] = useState([]);
-  const [selectedIssue, setSelectedIssue] = useState(null);
+  const [reviewData, setReviewData] =
+    useState([]);
 
-  const [filter, setFilter] = useState("all");
-  const [category, setCategory] = useState("all");
+  // Phase 2.3: Code quality score
+  const [qualityScore, setQualityScore] =
+    useState(null);
 
-  const [parsing, setParsing] = useState(false);
-  const [parsingProgress, setParsingProgress] = useState(0);
+  const [selectedIssue, setSelectedIssue] =
+    useState(null);
 
-  const [uploading, setUploading] = useState(false);
+  const [filter, setFilter] =
+    useState("all");
+  const [category, setCategory] =
+    useState("all");
 
-  const [loadingFix, setLoadingFix] = useState(false);
-  const [applyingFix, setApplyingFix] = useState(false);
+  const [parsing, setParsing] =
+    useState(false);
+  const [parsingProgress, setParsingProgress] =
+    useState(0);
 
-  const [error, setError] = useState("");
-
-  const [showDiff, setShowDiff] = useState(false);
-  const [showConfirmRemoveAll, setShowConfirmRemoveAll] =
+  const [uploading, setUploading] =
     useState(false);
 
-  const [dragActive, setDragActive] = useState(false);
-  const [invalidFiles, setInvalidFiles] = useState([]);
+  const [loadingFix, setLoadingFix] =
+    useState(false);
+  const [applyingFix, setApplyingFix] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
+
+  const [showDiff, setShowDiff] =
+    useState(false);
+  const [
+    showConfirmRemoveAll,
+    setShowConfirmRemoveAll,
+  ] = useState(false);
+
+  const [dragActive, setDragActive] =
+    useState(false);
+  const [invalidFiles, setInvalidFiles] =
+    useState([]);
 
   const fileInputRef = useRef(null);
   const fileSingleRef = useRef(null);
@@ -70,13 +102,18 @@ export default function useCodeReview() {
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
 
-  const isAllowedFile = useCallback((file) => {
-    const extension = (
-      file.name.split(".").pop() || ""
-    ).toLowerCase();
+  const isAllowedFile = useCallback(
+    (file) => {
+      const extension = (
+        file.name.split(".").pop() || ""
+      ).toLowerCase();
 
-    return ALLOWED_EXTENSIONS.includes(extension);
-  }, []);
+      return ALLOWED_EXTENSIONS.includes(
+        extension
+      );
+    },
+    []
+  );
 
   const formatBytes = useCallback(
     (bytes, decimals = 2) => {
@@ -120,8 +157,16 @@ export default function useCodeReview() {
       ).toLowerCase();
 
       if (ext === "py") return "🐍";
-      if (ext === "js" || ext === "jsx") return "📜";
-      if (ext === "ts" || ext === "tsx") return "🔷";
+      if (
+        ext === "js" ||
+        ext === "jsx"
+      )
+        return "📜";
+      if (
+        ext === "ts" ||
+        ext === "tsx"
+      )
+        return "🔷";
       if (ext === "java") return "☕";
       if (ext === "json") return "🧾";
       if (ext === "md") return "📘";
@@ -137,9 +182,9 @@ export default function useCodeReview() {
 
       try {
         const selectedFiles =
-          Array.from(fileListInput || []).filter(
-            isAllowedFile
-          );
+          Array.from(
+            fileListInput || []
+          ).filter(isAllowedFile);
 
         if (!selectedFiles.length) {
           return;
@@ -155,7 +200,8 @@ export default function useCodeReview() {
                 file,
                 "webkitRelativePath",
                 {
-                  value: file.fullPath,
+                  value:
+                    file.fullPath,
                   configurable: true,
                 }
               );
@@ -189,7 +235,8 @@ export default function useCodeReview() {
         ) {
           const file = normalized[i];
 
-          const text = await file.text();
+          const text =
+            await file.text();
 
           const path =
             file.webkitRelativePath ||
@@ -259,7 +306,8 @@ export default function useCodeReview() {
     (path) => {
       const nextFileList =
         fileList.filter(
-          (item) => item.path !== path
+          (item) =>
+            item.path !== path
         );
 
       const nextFiles = files.filter(
@@ -317,6 +365,10 @@ export default function useCodeReview() {
     setCode("");
     setFixedCode("");
     setReviewData([]);
+
+    // Phase 2.3: clear quality score
+    setQualityScore(null);
+
     setSelectedIssue(null);
     setSelectedFolder(null);
     setShowDiff(false);
@@ -392,6 +444,14 @@ export default function useCodeReview() {
             language,
             model,
           });
+
+        // Phase 2.3:
+        // Store quality score returned
+        // by the backend.
+        setQualityScore(
+          response.quality_score ||
+            null
+        );
 
         setReviewData(
           response.issues || []
@@ -703,9 +763,11 @@ export default function useCodeReview() {
       }
     };
   }, [filteredReview]);
+
   const clearError = useCallback(() => {
     setError("");
   }, []);
+
   return {
     // constants
     languages: LANGUAGES,
@@ -730,6 +792,9 @@ export default function useCodeReview() {
     filteredBySeverity,
     selectedIssue,
     stats,
+
+    // Phase 2.3
+    qualityScore,
 
     // configuration
     language,

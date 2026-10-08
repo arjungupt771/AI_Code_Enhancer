@@ -1,4 +1,3 @@
-"""Validated API request and response models."""
 
 from typing import Literal
 
@@ -81,6 +80,31 @@ class ReviewIssue(BaseModel):
         value: str | None,
     ) -> str | None:
         return value.strip() if value else value
+
+
+
+class CategoryScore(BaseModel):
+    score: int = Field(ge=0, le=100)
+    issues: int = Field(ge=0)
+
+
+class FileScore(BaseModel):
+    score: int = Field(ge=0, le=100)
+    issues: int = Field(ge=0)
+
+
+class QualityScoreResponse(BaseModel):
+    overall: int = Field(ge=0, le=100)
+    categories: dict[str, CategoryScore] = Field(
+        default_factory=dict
+    )
+    files: dict[str, FileScore] = Field(
+        default_factory=dict
+    )
+    severity_counts: dict[str, int] = Field(
+        default_factory=dict
+    )
+    total_issues: int = Field(ge=0)
 
 
 class ReviewResponse(BaseModel):

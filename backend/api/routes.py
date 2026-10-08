@@ -3,7 +3,7 @@
 import logging
 from pathlib import Path
 from typing import Annotated
-
+from backend.scoring import calculate_quality_score
 from fastapi import (
     APIRouter,
     File,
@@ -145,6 +145,7 @@ async def review_code(
         combined_issues = (
             static_issues + ai_response.issues
         )
+        quality = calculate_quality_score(combined_issues)
 
         return ReviewResponse(
             issues=combined_issues,
@@ -155,15 +156,8 @@ async def review_code(
         logger.exception(
             "Code review failed"
         )
+        raise
 
-        raise HTTPException(
-            status_code=502,
-            detail=(
-                "Code review failed. "
-                "Check the local AI configuration "
-                "and try again."
-            ),
-        ) from exc
 
 
 @router.post("/fix-code")
