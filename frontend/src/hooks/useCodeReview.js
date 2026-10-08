@@ -10,6 +10,7 @@ import {
   generateFix,
   reviewCode,
   DEFAULT_MODEL,
+  DEFAULT_GROQ_MODEL,
 } from "../services/api";
 
 const ALLOWED_EXTENSIONS = [
@@ -26,6 +27,16 @@ const ALLOWED_EXTENSIONS = [
   "rs",
   "go",
 ];
+
+const PROVIDER_MODELS = {
+  gemini: [
+    { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+    { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+  ],
+  groq: [
+    { value: DEFAULT_GROQ_MODEL, label: "Groq openai/gpt-oss-120b" },
+  ],
+};
 
 const LANGUAGES = [
   { key: "Python", icon: "🐍" },
@@ -46,12 +57,15 @@ export default function useCodeReview() {
 
   const [language, setLanguage] =
     useState("Python");
+  const [provider, setProvider] = useState("gemini");
   const [model, setModel] =
     useState(DEFAULT_MODEL);
 
   const [code, setCode] = useState("");
   const [fixedCode, setFixedCode] =
     useState("");
+  const [patch, setPatch] = useState("");
+  const [patchStats, setPatchStats] = useState({ additions: 0, deletions: 0 });
 
   const [reviewData, setReviewData] =
     useState([]);
@@ -369,6 +383,8 @@ export default function useCodeReview() {
     setActiveFile(null);
     setCode("");
     setFixedCode("");
+    setPatch("");
+    setPatchStats({ additions: 0, deletions: 0 });
     setReviewData([]);
 
     // Phase 2.3: clear quality score
@@ -449,6 +465,7 @@ export default function useCodeReview() {
             files,
             language,
             model,
+            provider,
           });
 
         // Phase 2.3:
@@ -475,6 +492,11 @@ export default function useCodeReview() {
             response.fixed_code ||
             ""
         );
+        setPatch(response.patch || "");
+        setPatchStats({
+          additions: response.additions || 0,
+          deletions: response.deletions || 0,
+        });
 
         setSelectedIssue(null);
       } catch (error) {
@@ -495,6 +517,7 @@ export default function useCodeReview() {
       files,
       language,
       model,
+      provider,
     ]);
 
   const applyIssueFix =
@@ -519,6 +542,7 @@ export default function useCodeReview() {
               language,
               issues: [issue],
               model,
+              provider,
             });
 
           const generatedCode =
@@ -535,6 +559,11 @@ export default function useCodeReview() {
           setFixedCode(
             generatedCode
           );
+          setPatch(response.patch || "");
+          setPatchStats({
+            additions: response.additions || 0,
+            deletions: response.deletions || 0,
+          });
 
           setShowDiff(true);
         } catch (error) {
@@ -556,6 +585,7 @@ export default function useCodeReview() {
         code,
         language,
         model,
+        provider,
       ]
     );
 
@@ -649,6 +679,7 @@ export default function useCodeReview() {
             language,
             issues: filteredReview,
             model,
+            provider,
           });
 
         const generatedCode =
@@ -665,6 +696,11 @@ export default function useCodeReview() {
         setFixedCode(
           generatedCode
         );
+        setPatch(response.patch || "");
+        setPatchStats({
+          additions: response.additions || 0,
+          deletions: response.deletions || 0,
+        });
 
         setShowDiff(true);
       } catch (error) {
@@ -685,6 +721,7 @@ export default function useCodeReview() {
       code,
       language,
       model,
+      provider,
       filteredReview,
     ]);
 
@@ -777,6 +814,12 @@ export default function useCodeReview() {
     };
   }, [filteredReview]);
 
+  const handleProviderChange = useCallback((nextProvider) => {
+    setProvider(nextProvider);
+    const nextModels = PROVIDER_MODELS[nextProvider] || [];
+    setModel(nextModels[0]?.value || DEFAULT_MODEL);
+  }, []);
+
   const clearError = useCallback(() => {
     setError("");
   }, []);
@@ -796,6 +839,8 @@ export default function useCodeReview() {
     // editor
     code,
     fixedCode,
+    patch,
+    patchStats,
     editorRef,
     monacoRef,
 
@@ -813,7 +858,9 @@ export default function useCodeReview() {
 
     // configuration
     language,
+    provider,
     model,
+    providerModels: PROVIDER_MODELS,
     category,
     filter,
 
@@ -840,6 +887,7 @@ export default function useCodeReview() {
     // setters
     setLanguage,
     setModel,
+    setProvider: handleProviderChange,
     setCategory,
     setFilter,
     setCode,

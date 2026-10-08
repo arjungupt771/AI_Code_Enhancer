@@ -55,6 +55,18 @@ export default function ReviewSummary({
         "bg-red-100 text-red-800",
     },
     {
+      key: "maintainability",
+      label: "Maintainability",
+      icon: "🧩",
+      className: "bg-blue-100 text-blue-800",
+    },
+    {
+      key: "reliability",
+      label: "Reliability",
+      icon: "🛡️",
+      className: "bg-orange-100 text-orange-800",
+    },
+    {
       key: "all",
       label: "Total Issues",
       icon: "📊",
@@ -74,7 +86,7 @@ export default function ReviewSummary({
               </div>
 
               <div className="mt-1 text-sm text-gray-500">
-                Based on severity and category of detected issues
+                Based on severity, risk, and five quality dimensions
               </div>
             </div>
 
@@ -83,10 +95,20 @@ export default function ReviewSummary({
                 {qualityScore.overall}
               </div>
 
-              <div className="text-sm text-gray-500">
-                / 100
+              <div>
+                <div className="text-sm text-gray-500">/ 100</div>
+                <div className="text-xs font-medium text-gray-600">Risk: {qualityScore.risk_level || "Low"}</div>
               </div>
             </div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-4">
+            {Object.entries(qualityScore.categories || {}).map(([key, value]) => (
+              <div key={key} className="rounded-lg bg-white/80 border p-2">
+                <div className="text-xs capitalize text-gray-500">{key}</div>
+                <div className="text-lg font-semibold text-gray-800">{value.score}</div>
+                <div className="text-[11px] text-gray-500">{value.issues} issues</div>
+              </div>
+            ))}
           </div>
         </div>
       )}

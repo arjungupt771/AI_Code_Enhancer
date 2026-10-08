@@ -1,5 +1,6 @@
 
 
+import difflib
 import logging
 from pathlib import Path
 from typing import Annotated
@@ -26,7 +27,9 @@ from backend.architecture import (
 )
 from backend.core_config import (
     DEFAULT_MODEL,
+    DEFAULT_GROQ_MODEL,
     GEMINI_API_KEY,
+    GROQ_API_KEY,
 )
 from backend.dependencies import (
     DependencyAnalyzer,
@@ -36,6 +39,7 @@ from backend.repository import (
 )
 from backend.schemas import (
     FixRequest,
+    FixResponse,
     ReviewResponse,
 )
 from backend.scoring import (
@@ -57,14 +61,16 @@ REPOSITORY_ANALYZER = RepositoryAnalyzer()
 DEPENDENCY_ANALYZER = DependencyAnalyzer()
 ARCHITECTURE_ANALYZER = ArchitectureAnalyzer()
 
-def validate_api_configuration() -> None:
-    if not GEMINI_API_KEY:
+def validate_api_configuration(provider: str) -> None:
+    if provider == "gemini" and not GEMINI_API_KEY:
         raise HTTPException(
             status_code=500,
-            detail=(
-                "AI service is not configured. "
-                "Set GEMINI_API_KEY in the local .env file."
-            ),
+            detail="Gemini is not configured. Set GEMINI_API_KEY in the local .env file.",
+        )
+    if provider == "groq" and not GROQ_API_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail="Groq is not configured. Set GROQ_API_KEY in the local .env file.",
         )
 
 
@@ -97,9 +103,16 @@ async def review_code(
         str,
         Form(),
     ] = DEFAULT_MODEL,
+    provider: Annotated[
+        str,
+        Form(),
+    ] = "gemini",
 ) -> ReviewResponse:
 
-    validate_api_configuration()
+    provider = provider.strip().lower()
+    if provider not in {"gemini", "groq"}:
+        raise HTTPException(status_code=400, detail="Provider must be 'gemini' or 'groq'.")
+    validate_api_configuration(provider)
 
     if not files:
         raise HTTPException(
@@ -341,8 +354,9 @@ async def review_code(
             mode="review",
             model_name=(
                 model.strip()
-                or DEFAULT_MODEL
+                or (DEFAULT_GROQ_MODEL if provider == "groq" else DEFAULT_MODEL)
             ),
+            provider=provider,
         )
 
         # -------------------------------------------------
@@ -418,23 +432,14 @@ async def review_code(
 
             quality_score={
                 "overall": quality.overall,
+                "risk_level": quality.risk_level,
 
                 "categories": {
                     category: {
                         "score": score,
-                        "issues": (
-                            quality
-                            .category_counts
-                            .get(
-                                category,
-                                0,
-                            )
-                        ),
+                        "issues": quality.category_counts.get(category, 0),
                     }
-                    for category, score
-                    in quality
-                    .category_scores
-                    .items()
+                    for category, score in quality.category_scores.items()
                 },
 
                 "files": {
@@ -499,12 +504,14 @@ async def review_code(
         ) from exc
 
 
-@router.post("/fix-code")
-async def fix_code(
-    request: FixRequest,
-) -> dict[str, str]:
+@router.post("/fix-code", response_model=FixResponse)
+async def fix_code(request: FixRequest) -> FixResponse:
+    provider = request.provider
+    validate_api_configuration(provider)
 
-    validate_api_configuration()
+    model = request.model or (
+        DEFAULT_GROQ_MODEL if provider == "groq" else DEFAULT_MODEL
+    )
 
     try:
         fixed_code = review_code_with_llm(
@@ -512,33 +519,40 @@ async def fix_code(
             request.language,
             mode="fix",
             issues=request.issues,
-            model_name=(
-                request.model
-                or DEFAULT_MODEL
-            ),
+            model_name=model,
+            provider=provider,
         )
-
     except Exception as exc:
-        logger.exception(
-            "Code fix generation failed"
-        )
-
+        logger.exception("Code fix generation failed")
         raise HTTPException(
             status_code=502,
             detail=(
-                "Code fix generation failed. "
-                "Check the local AI configuration "
-                "and try again."
+                "Code fix generation failed. Check the selected AI provider "
+                "configuration and try again."
             ),
         ) from exc
 
-    return {
-        "fixed_code": (
-            fixed_code
-            if isinstance(
-                fixed_code,
-                str,
-            )
-            else ""
+    if not isinstance(fixed_code, str) or not fixed_code.strip():
+        raise HTTPException(status_code=502, detail="The AI provider returned an empty code fix.")
+
+    patch_lines = list(
+        difflib.unified_diff(
+            request.code.splitlines(),
+            fixed_code.splitlines(),
+            fromfile="original",
+            tofile="fixed",
+            lineterm="",
         )
-    }
+    )
+    patch = "\n".join(patch_lines)
+    additions = sum(1 for line in patch_lines if line.startswith("+") and not line.startswith("+++"))
+    deletions = sum(1 for line in patch_lines if line.startswith("-") and not line.startswith("---"))
+
+    return FixResponse(
+        fixed_code=fixed_code,
+        patch=patch,
+        additions=additions,
+        deletions=deletions,
+        provider=provider,
+        model=model,
+    )

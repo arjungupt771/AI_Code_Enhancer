@@ -6,6 +6,10 @@ const DEFAULT_MODEL =
   process.env.REACT_APP_DEFAULT_MODEL ||
   "gemini-2.5-flash";
 
+const DEFAULT_GROQ_MODEL =
+  process.env.REACT_APP_GROQ_DEFAULT_MODEL ||
+  "openai/gpt-oss-120b";
+
 
 async function parseResponse(response) {
   let data = null;
@@ -34,6 +38,7 @@ export async function reviewCode({
   files,
   language,
   model,
+  provider,
   onUploadProgress,
 }) {
   const formData = new FormData();
@@ -56,8 +61,10 @@ export async function reviewCode({
 
   formData.append(
     "model",
-    model || DEFAULT_MODEL
+    model || (provider === "groq" ? DEFAULT_GROQ_MODEL : DEFAULT_MODEL)
   );
+
+  formData.append("provider", provider || "gemini");
 
   /*
    * fetch() does not provide upload progress.
@@ -100,6 +107,7 @@ export async function generateFix({
   language,
   issues,
   model,
+  provider,
 }) {
   const response = await fetch(
     `${API_BASE_URL}/fix-code`,
@@ -115,7 +123,8 @@ export async function generateFix({
         code,
         language,
         issues,
-        model: model || DEFAULT_MODEL,
+        model: model || (provider === "groq" ? DEFAULT_GROQ_MODEL : DEFAULT_MODEL),
+        provider: provider || "gemini",
       }),
     }
   );
@@ -136,4 +145,5 @@ export async function getHealth() {
 export {
   API_BASE_URL,
   DEFAULT_MODEL,
+  DEFAULT_GROQ_MODEL,
 };

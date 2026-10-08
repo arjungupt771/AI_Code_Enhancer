@@ -98,12 +98,9 @@ def test_review_returns_validated_schema(
 
     body = response.json()
 
-    assert body["issues"][0]["line"] == 2
-
-    assert (
-        body["issues"][0]["category"]
-        == "style"
-    )
+    ai_issues = [issue for issue in body["issues"] if issue["source"] == "ai"]
+    assert ai_issues[0]["line"] == 2
+    assert ai_issues[0]["category"] == "style"
 
 
 def test_fix_endpoint_returns_fixed_code(
@@ -143,9 +140,13 @@ def test_fix_endpoint_returns_fixed_code(
 
     assert response.status_code == 200
 
-    assert response.json() == {
-        "fixed_code": "print('fixed')"
-    }
+    body = response.json()
+    assert body["fixed_code"] == "print('fixed')"
+    assert body["provider"] == "gemini"
+    assert body["additions"] == 1
+    assert body["deletions"] == 1
+    assert "-print('broken')" in body["patch"]
+    assert "+print('fixed')" in body["patch"]
 
 def test_review_merges_static_and_ai_findings(
     monkeypatch,
@@ -211,11 +212,11 @@ def test_review_merges_static_and_ai_findings(
     assert len(static_issues) >= 1
     assert len(ai_issues) == 1
 
-    assert static_issues[0]["tool"] == "ruff"
-    assert static_issues[0]["rule_id"] in {
-        "F401",
-        "I001",
-    }
+    assert any(issue["tool"] == "ruff" for issue in static_issues)
+    assert any(
+        issue["rule_id"] in {"F401", "I001"}
+        for issue in static_issues
+    )
 
     assert (
         ai_issues[0]["message"]

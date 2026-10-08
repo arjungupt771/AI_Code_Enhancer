@@ -32,6 +32,8 @@ export default function CodeUploader() {
 
     code,
     fixedCode,
+    patch,
+    patchStats,
     editorRef,
 
     reviewData,
@@ -46,7 +48,9 @@ export default function CodeUploader() {
     qualityScore,
 
     language,
+    provider,
     model,
+    providerModels,
     category,
     filter,
 
@@ -65,6 +69,7 @@ export default function CodeUploader() {
 
     setLanguage,
     setModel,
+    setProvider,
     setCategory,
     setFilter,
     setCode,
@@ -537,23 +542,31 @@ export default function CodeUploader() {
         </div>
       </div>
 
-      {/* Model */}
+      {/* AI provider + model */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+        <select
+          className="w-full border p-2 rounded"
+          value={provider}
+          onChange={(event) => setProvider(event.target.value)}
+          aria-label="AI provider"
+        >
+          <option value="gemini">Google Gemini</option>
+          <option value="groq">Groq</option>
+        </select>
 
-      <select
-        className="w-full mb-3 border p-2 rounded"
-        value={model}
-        onChange={(event) =>
-          setModel(event.target.value)
-        }
-      >
-        <option value="gemini-2.5-flash">
-          Gemini 2.5 Flash
-        </option>
-
-        <option value="gemini-2.5-pro">
-          Gemini 2.5 Pro
-        </option>
-      </select>
+        <select
+          className="w-full border p-2 rounded"
+          value={model}
+          onChange={(event) => setModel(event.target.value)}
+          aria-label="AI model"
+        >
+          {(providerModels[provider] || []).map((item) => (
+            <option key={item.value} value={item.value}>
+              {item.label}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {/* Editor header */}
 
@@ -652,6 +665,8 @@ export default function CodeUploader() {
           fixedCode={fixedCode}
           language={language}
           showDiff={showDiff}
+          patch={patch}
+          patchStats={patchStats}
           onCodeChange={setCode}
           onEditorMount={
             handleEditorDidMount

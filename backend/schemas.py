@@ -20,6 +20,9 @@ Category = Literal[
     "performance",
     "style",
     "bug",
+    "maintainability",
+    "reliability",
+    "analysis",
 ]
 
 
@@ -95,6 +98,7 @@ class FileScore(BaseModel):
 
 class QualityScoreResponse(BaseModel):
     overall: int = Field(ge=0, le=100)
+    risk_level: Literal["Low", "Moderate", "High", "Critical"] = "Low"
     categories: dict[str, CategoryScore] = Field(
         default_factory=dict
     )
@@ -105,6 +109,15 @@ class QualityScoreResponse(BaseModel):
         default_factory=dict
     )
     total_issues: int = Field(ge=0)
+
+class FixResponse(BaseModel):
+    fixed_code: str
+    patch: str
+    additions: int = Field(ge=0)
+    deletions: int = Field(ge=0)
+    provider: Literal["gemini", "groq"]
+    model: str
+
 
 class DependencyInfo(BaseModel):
     """Dependency information returned by repository analysis."""
@@ -219,6 +232,7 @@ class FixRequest(BaseModel):
     language: str
     issues: list[ReviewIssue] = Field(default_factory=list)
     model: str | None = None
+    provider: Literal["gemini", "groq"] = "gemini"
 
     @field_validator("code", "language")
     @classmethod

@@ -41,7 +41,9 @@ def _parse_positive_int(value: str | None, default: int) -> int:
 @dataclass(frozen=True)
 class Settings:
     gemini_api_key: str | None
+    groq_api_key: str | None
     default_model: str
+    default_groq_model: str
     cors_origins: tuple[str, ...]
     max_file_size_bytes: int
     max_files: int
@@ -49,9 +51,14 @@ class Settings:
 
 settings = Settings(
     gemini_api_key=os.getenv("GEMINI_API_KEY"),
+    groq_api_key=os.getenv("GROQ_API_KEY"),
     default_model=(
         os.getenv("DEFAULT_MODEL", "gemini-2.5-flash").strip()
         or "gemini-2.5-flash"
+    ),
+    default_groq_model=(
+        os.getenv("GROQ_DEFAULT_MODEL", "openai/gpt-oss-120b").strip()
+        or "openai/gpt-oss-120b"
     ),
     cors_origins=_parse_origins(
         os.getenv("CORS_ORIGINS")
@@ -69,7 +76,9 @@ settings = Settings(
 
 # Backward-compatible exports.
 GEMINI_API_KEY = settings.gemini_api_key
+GROQ_API_KEY = settings.groq_api_key
 DEFAULT_MODEL = settings.default_model
+DEFAULT_GROQ_MODEL = settings.default_groq_model
 CORS_ORIGINS = list(settings.cors_origins)
 MAX_FILE_SIZE_BYTES = settings.max_file_size_bytes
 MAX_FILES = settings.max_files

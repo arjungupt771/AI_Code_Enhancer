@@ -118,6 +118,7 @@ test("generateFix sends code and issues", async () => {
     language: "Python",
     issues: [],
     model: "gemini-2.5-flash",
+    provider: "gemini",
   });
 
   expect(

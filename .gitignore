@@ -30,6 +30,7 @@ Thumbs.db
 .coverage
 htmlcov/
 
+frontend/.env
+
 # Local database / secrets
 *.db
-EOF
