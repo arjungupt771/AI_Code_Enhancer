@@ -1,4 +1,4 @@
-"""HTTP routes for the local AI Code Enhancer API."""
+
 
 import logging
 from pathlib import Path
@@ -20,6 +20,9 @@ from backend.analyzers import (
 from backend.core.file_validation import (
     read_source_file,
     validate_file_count,
+)
+from backend.architecture import (
+    ArchitectureAnalyzer,
 )
 from backend.core_config import (
     DEFAULT_MODEL,
@@ -52,7 +55,7 @@ STATIC_ANALYZER = create_hybrid_analyzer()
 REPOSITORY_ANALYZER = RepositoryAnalyzer()
 
 DEPENDENCY_ANALYZER = DependencyAnalyzer()
-
+ARCHITECTURE_ANALYZER = ArchitectureAnalyzer()
 
 def validate_api_configuration() -> None:
     if not GEMINI_API_KEY:
@@ -266,6 +269,38 @@ async def review_code(
             ),
         }
 
+
+        architecture_result = (
+            ARCHITECTURE_ANALYZER.analyze(
+                repository_files
+            )
+        )
+
+        architecture_summary = {
+            "nodes": [
+                {
+                "id": node.id,
+                "label": node.label,
+                "node_type": node.node_type,
+                "path": node.path,
+                }
+                for node in architecture_result.nodes
+            ],
+
+            "edges":[
+                {
+                    "source": edge.source,
+                    "target": edge.target,
+                    "edge_type": edge.edge_type,
+                }
+                for edge in architecture_result.edges
+            ],
+            "cycles": architecture_result.cycles,
+            "total_nodes": architecture_result.total_nodes,
+            "total_edges": architecture_result.total_edges,
+            "cycle_count": architecture_result.cycle_count,
+        }
+
         # -------------------------------------------------
         # Static analysis
         # -------------------------------------------------
@@ -378,6 +413,7 @@ async def review_code(
 
         return ReviewResponse(
             issues=combined_issues,
+            architecture=architecture_summary,
             summary=ai_response.summary,
 
             quality_score={

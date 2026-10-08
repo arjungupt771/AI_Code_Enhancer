@@ -63,6 +63,8 @@ export default function useCodeReview() {
   const [dependencySummary, setDependencySummary] =
   useState(null);
 
+  const [architecture, setArchitecture] = useState(null);
+
   const [selectedIssue, setSelectedIssue] =
     useState(null);
 
@@ -372,7 +374,7 @@ export default function useCodeReview() {
     // Phase 2.3: clear quality score
     setQualityScore(null);
     setDependencySummary(null);
-
+    setArchitecture(null);
     setSelectedIssue(null);
     setSelectedFolder(null);
     setShowDiff(false);
@@ -459,6 +461,9 @@ export default function useCodeReview() {
 
         setDependencySummary(
           response.dependency_summary || null
+        );
+        setArchitecture(
+          response.architecture || null
         );
 
         setReviewData(
@@ -801,6 +806,7 @@ export default function useCodeReview() {
     selectedIssue,
     stats,
     dependencySummary,
+    architecture,
 
     // Phase 2.3
     qualityScore,

@@ -134,6 +134,38 @@ class DependencySummary(BaseModel):
         default_factory=dict
     )
 
+class ArchitectureNodeResponse(BaseModel):
+    """A node in the repository architecture graph."""
+
+    id: str
+    label: str
+    node_type: str
+    path: str | None = None
+
+
+class ArchitectureEdgeResponse(BaseModel):
+    """A directed relationship in the architecture graph."""
+
+    source: str
+    target: str
+    edge_type: str
+
+
+class ArchitectureSummary(BaseModel):
+    """Repository architecture graph summary."""
+
+    nodes: list[ArchitectureNodeResponse] = Field(
+        default_factory=list
+    )
+    edges: list[ArchitectureEdgeResponse] = Field(
+        default_factory=list
+    )
+    cycles: list[list[str]] = Field(
+        default_factory=list
+    )
+    total_nodes: int = Field(ge=0)
+    total_edges: int = Field(ge=0)
+    cycle_count: int = Field(ge=0)
 
 class RepositorySummary(BaseModel):
     """Repository-level analysis summary."""
@@ -178,6 +210,8 @@ class ReviewResponse(BaseModel):
     repository: RepositorySummary | None = None
 
     dependency_summary: DependencySummary | None = None
+
+    architecture: ArchitectureSummary | None = None
 
 
 class FixRequest(BaseModel):

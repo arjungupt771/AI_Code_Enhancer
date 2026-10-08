@@ -11,6 +11,8 @@ import FileList from "./FileList";
 import ReviewSummary from "./ReviewSummary";
 import CodeEditor from "./CodeEditor";
 import ReviewPanel from "./ReviewPanel";
+import ArchitectureGraph from "./ArchitectureGraph";
+
 
 export default function CodeUploader() {
   const langRef = useRef(null);
@@ -38,6 +40,7 @@ export default function CodeUploader() {
     selectedIssue,
     stats,
     dependencySummary,
+    architecture,
 
     // Phase 2.3: Code quality score
     qualityScore,
@@ -367,7 +370,11 @@ export default function CodeUploader() {
 
       <DependencySummary
         dependencySummary={dependencySummary}
-      />  
+      /> 
+
+      <ArchitectureGraph
+      architecture={architecture}
+      />
 
       {/* Upload */}
 
